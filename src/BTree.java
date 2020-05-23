@@ -7,8 +7,8 @@ public class BTree<T extends Comparable<T>> {
     // Default to 2-3 Tree
     private int minKeySize = 1;
     private int minChildrenSize = minKeySize + 1; // 2
-    private int maxKeySize = 2 * minKeySize; // 2
-    private int maxChildrenSize = maxKeySize + 1; // 3
+    private int maxKeySize = 2 * minKeySize + 1; // 2  -- changed to 3
+    private int maxChildrenSize = maxKeySize + 1; // 3  -- changed to 4
 
     private Node<T> root = null;
     private int size = 0;
@@ -28,14 +28,36 @@ public class BTree<T extends Comparable<T>> {
     public BTree(int order) {
         this.minKeySize = order;
         this.minChildrenSize = minKeySize + 1;
-        this.maxKeySize = 2 * minKeySize;
+        this.maxKeySize = 2 * minKeySize + 1;  //changed, added + 1
         this.maxChildrenSize = maxKeySize + 1;
     }
     
     //Task 2.1
     public boolean insert(T value) {
-    	// TODO: implement your code here
-		return false;
+    	if (root==null){    //empty tree
+    	    root = new Node<>(null, maxKeySize,maxChildrenSize);
+    	    root.addKey(value);
+        }
+        else {      //not empty tree
+            if (root.keysSize==maxKeySize){
+                split(root);
+            }
+            Node <T> current = root;
+            while (current.numberOfChildren()!=0){      //not a leaf
+                int i=0;
+                while (i<current.keysSize && value.compareTo(current.getKey(i))>0){      //navigating
+                    i++;
+                }
+                if (current.getChild(i).keysSize==maxKeySize){      //the next node is full
+                    split(current.getChild(i));
+                    if (value.compareTo(current.getKey(i))>0)       // the i-th key is lesser than value
+                        i++;
+                }
+                current=current.getChild(i);    //now the child in the i-th cell, is a non-full node
+            }
+            current.addKey(value);      //current is a leaf, with less than maxSize keys
+        }
+		return true;
     }
 	
     public T delete(T value) {
@@ -593,7 +615,8 @@ public class BTree<T extends Comparable<T>> {
         }
 
         private void addKey(T value) {
-            keys[keysSize++] = value;
+            keys[keysSize] = value;     //keysSize points to the first blank cell
+            keysSize++;
             Arrays.sort(keys, 0, keysSize);
         }
 
@@ -650,7 +673,8 @@ public class BTree<T extends Comparable<T>> {
 
         private boolean addChild(Node<T> child) {
             child.parent = this;
-            children[childrenSize++] = child;
+            children[childrenSize] = child;     //childrenSize points to the first blank cell
+            childrenSize++;
             Arrays.sort(children, 0, childrenSize, comparator);
             return true;
         }
